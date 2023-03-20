@@ -1,0 +1,241 @@
+# # # # # # # # # # # # # # # # # # # # # # # 
+# Install required packages
+# tidyverse for data import and wrangling
+# lubridate for date functions
+# ggplot for visualization
+# # # # # # # # # # # # # # # # # # # # # # #  
+
+
+library(tidyverse)  #helps wrangle data
+library(lubridate)  #helps wrangle date attributes
+library(ggplot2)  #helps visualize data
+getwd() #displays your working directory
+setwd("/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS") #sets your working directory to simplify calls to data ... make sure to use your OWN username instead of mine ;)
+
+
+#=====================
+# STEP 1: COLLECT DATA
+#=====================
+# Upload Divvy datasets (csv files) here
+X202201_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202201-divvy-tripdata.xlsx")
+X202202_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202202-divvy-tripdata.xlsx")
+X202203_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202203-divvy-tripdata.xlsx")
+X202204_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202204-divvy-tripdata.xlsx")
+X202205_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202205-divvy-tripdata.xlsx")
+X202206_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202206-divvy-tripdata.xlsx")
+X202207_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202207-divvy-tripdata.xlsx")
+X202208_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202208-divvy-tripdata.xlsx")
+X202209_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202209-divvy-tripdata.xlsx")
+X202210_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202210-divvy-tripdata.xlsx")
+X202211_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202211-divvy-tripdata.xlsx")
+X202212_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202212-divvy-tripdata.xlsx")
+X202301_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202301-divvy-tripdata.xlsx")
+X202302_divvy_tripdata <- read_excel("C:/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/XLS/202302-divvy-tripdata.xlsx")
+
+
+
+#====================================================
+# STEP 2: WRANGLE DATA AND COMBINE INTO A SINGLE FILE
+#====================================================
+# Compare column names each of the files
+# While the names don't have to be in the same order, they DO need to match perfectly before we can use a command to join them into one file
+colnames(X202201_divvy_tripdata)
+colnames(X202202_divvy_tripdata)
+colnames(X202203_divvy_tripdata)
+colnames(X202204_divvy_tripdata)
+colnames(X202205_divvy_tripdata)
+colnames(X202206_divvy_tripdata)
+colnames(X202207_divvy_tripdata)
+colnames(X202208_divvy_tripdata)
+colnames(X202209_divvy_tripdata)
+colnames(X202210_divvy_tripdata)
+colnames(X202211_divvy_tripdata)
+colnames(X202212_divvy_tripdata)
+colnames(X202301_divvy_tripdata)
+colnames(X202302_divvy_tripdata)
+# there are few extra columns for first month excel sheet 
+# removed and cleaned the extra column 
+
+X202201_divvy_tripdata <- X202201_divvy_tripdata %>%
+  select(-c("Ride Length","day_of_week,")) #remove extra colimn from excel spread scale_shape_identity()
+
+# Inspect the dataframes and look for incongruencies
+str(X202201_divvy_tripdata)
+str(X202202_divvy_tripdata)
+str(X202203_divvy_tripdata)
+str(X202204_divvy_tripdata)
+str(X202205_divvy_tripdata)
+str(X202206_divvy_tripdata)
+str(X202207_divvy_tripdata)
+str(X202208_divvy_tripdata)
+str(X202209_divvy_tripdata)
+str(X202210_divvy_tripdata)
+str(X202211_divvy_tripdata)
+str(X202212_divvy_tripdata)
+str(X202301_divvy_tripdata)
+str(X202302_divvy_tripdata)
+
+
+# Convert end_station_id  to character from number in X202209_divvy_tripdata so that they can stack correctly
+X202209_divvy_tripdata <-  mutate(X202209_divvy_tripdata, end_station_id = as.character(end_station_id))
+                   
+
+
+# Stack individual quarter's data frames into one big data frame
+all_trip_data <- bind_rows((X202201_divvy_tripdata)
+                           ,(X202202_divvy_tripdata)
+                           ,(X202203_divvy_tripdata)
+                           ,(X202204_divvy_tripdata)
+                           ,(X202205_divvy_tripdata)
+                           ,(X202206_divvy_tripdata)
+                           ,(X202207_divvy_tripdata)
+                           ,(X202208_divvy_tripdata)
+                           ,(X202209_divvy_tripdata)
+                           ,(X202210_divvy_tripdata)
+                           ,(X202211_divvy_tripdata)
+                           ,(X202212_divvy_tripdata)
+                           ,(X202301_divvy_tripdata)
+                           ,(X202302_divvy_tripdata))
+
+# Remove lat, long fields as this data was dropped in some files
+all_trip_data <- all_trip_data %>%  
+  select(-c(start_lat, start_lng, end_lat, end_lng))
+
+
+str(all_trip_data)
+
+
+#======================================================
+# STEP 3: CLEAN UP AND ADD DATA TO PREPARE FOR ANALYSIS
+#======================================================
+
+
+# Inspect the new table that has been created
+colnames(all_trip_data)  #List of column names
+nrow(all_trip_data)  #How many rows are in data frame?
+dim(all_trip_data)  #Dimensions of the data frame?
+head(all_trip_data)  #See the first 6 rows of data frame.  Also tail(all_trip_data)
+str(all_trip_data)  #See list of columns and data types (numeric, character, etc)
+summary(all_trip_data)  #Statistical summary of data. Mainly for numerics
+
+
+
+# The data can only be aggregated at the ride-level, which is too granular. 
+#We will want to add some additional columns of data -- such as day, month, year -- that provide additional opportunities to aggregate the data.
+
+
+table(all_trip_data$member_casual)
+
+table(all_trip_data$rideable_type )
+
+all_trip_data$date <- as.Date(all_trip_data$started_at) #Converting theformat to date The default format is yyyy-mm-dd
+all_trip_data$month <- format(as.Date(all_trip_data$date), "%m")
+all_trip_data$day <- format(as.Date(all_trip_data$date), "%d")
+all_trip_data$day_of_week <- format(as.Date(all_trip_data$date), "%A")
+all_trip_data$year <- format(as.Date(all_trip_data$date), "%Y")
+
+
+#We will want to add a calculated field for length of ride . We will add "ride_length" to the entire dataframe for consistency.
+
+all_trip_data$ride_length <- difftime(all_trip_data$ended_at,all_trip_data$started_at)
+
+# Inspect the structure of the columns
+str(all_trip_data)
+
+# Convert "ride_length" from Factor to numeric so we can run calculations on the data
+is.factor(all_trip_data$ride_length)
+all_trip_data$ride_length <- as.numeric(as.character(all_trip_data$ride_length))
+is.numeric(all_trip_data$ride_length)
+
+
+# Remove "bad" data
+# The dataframe includes a few hundred entries when bikes were taken out of docks and checked for quality by Divvy or ride_length was negative
+# We will create a new version of the dataframe (v2) since data is being removed
+
+all_trip_data_v2 <- all_trip_data[!(all_trip_data$ride_length<0),]
+
+#check if there are any data with null values
+all_trip_data_v2 %>%
+  filter (all_trip_data_v2$ride_length<0) %>%
+  head()
+
+
+#=====================================
+# STEP 4: CONDUCT DESCRIPTIVE ANALYSIS
+#=====================================
+
+
+# Descriptive analysis on ride_length (all figures in seconds)
+
+mean(all_trip_data_v2$ride_length) #straight average (total ride length / rides)
+median(all_trip_data_v2$ride_length) #midpoint number in the ascending array of ride lengths
+max(all_trip_data_v2$ride_length) #longest ride
+min(all_trip_data_v2$ride_length) #shortest ride
+
+# You can condense the four lines above to one line using summary() on the specific attribute
+summary(all_trip_data_v2$ride_length)
+
+# Compare members and casual users
+aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual, FUN = mean)
+aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual, FUN = median)
+aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual, FUN = max)
+aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual, FUN = min)
+
+# See the average ride time by each day for members vs casual users
+aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual + all_trip_data_v2$day_of_week, FUN = mean)
+
+# Notice that the days of the week are out of order. Let's fix that.
+all_trip_data_v2$day_of_week <- ordered(all_trip_data_v2$day_of_week, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+# Now, let's run the average ride time by each day for members vs casual users
+aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual + all_trip_data_v2$day_of_week, FUN = mean)
+
+
+
+# analyze ridership data by type and weekday
+all_trip_data_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>%  #creates weekday field using wday()
+  group_by(member_casual, weekday) %>%  #groups by usertype and weekday
+  summarise(number_of_rides = n()							#calculates the number of rides and average duration 
+            ,average_duration = mean(ride_length)) %>% 		# calculates the average duration
+  arrange(member_casual, weekday)								# sorts
+
+
+
+# Let's visualize the number of rides by rider type
+all_trip_data_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>% 
+  group_by(member_casual, weekday) %>% 
+  summarise(number_of_rides = n() ,average_duration = mean(ride_length)) %>% 
+  arrange(member_casual, weekday)  %>% 
+  ggplot(aes(x = weekday, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge")        
+
+
+ 
+
+
+# Let's create a visualization for average duration
+all_trip_data_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>% 
+  group_by(member_casual, weekday) %>% 
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_length)) %>% 
+  arrange(member_casual, weekday)  %>% 
+  ggplot(aes(x = weekday, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge")
+
+
+ 
+
+
+
+#=================================================
+# STEP 5: EXPORT SUMMARY FILE FOR FURTHER ANALYSIS
+#=================================================
+# Create a csv file that we will visualize in Excel, Tableau, or my presentation software
+
+counts <- aggregate(all_trip_data_v2$ride_length ~ all_trip_data_v2$member_casual + all_trip_data_v2$day_of_week, FUN = mean)
+write.csv(counts, file = '/Users/thiag/Desktop/Akila/Projects/Cap Stone Project/avg_ride_length.csv')
+
+
