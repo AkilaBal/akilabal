@@ -1,0 +1,56 @@
+import pandas as pd
+
+file_path = "input.xls"
+
+# Read everything as text first to avoid Excel auto-conversion
+df = pd.read_excel(file_path, dtype=str)
+
+# ID columns that must remain text with leading zeros
+explicit_string = {'FEIN', 'GNPI', 'NPI', 'MEDICAID'}
+
+dtype_map = {}
+
+for col in df.columns:
+    values = df[col].dropna().astype(str).str.strip()
+   
+    # Explicit ID columns (preserve leading zeros, do not convert to number)
+    if col.upper() in explicit_string:
+        dtype_map[col] = "string"
+        df[col] = values.replace("", pd.NA).astype("string")
+        continue
+
+    # Detect Date
+    dt = pd.to_datetime(values, errors="coerce")
+    if dt.notna().mean() >= 0.80:   # 80% threshold
+        dtype_map[col] = "datetime64[ns]"
+        df[col] = pd.to_datetime(df[col], errors="coerce")
+        continue
+
+    # Detect Boolean-like (true/false/yes/no)
+    lv = values.str.lower()
+    if lv.isin(["true","false","yes","no"]).mean() >= 0.80:
+        dtype_map[col] = "bool"
+        df[col] = lv.map({"true":True,"false":False,"yes":True,"no":False})
+        continue
+
+    # Detect Integer (only if NO decimal and no leading zeros)
+    if values.str.match(r"^[0-9]+$").mean() >= 0.80 and not values.str.match(r"^0[0-9]+$").any():
+        dtype_map[col] = "Int64"
+        df[col] = pd.to_numeric(values, errors="coerce").astype("Int64")
+        continue
+
+    # Default to String
+    dtype_map[col] = "string"
+    df[col] = values.replace("", pd.NA).astype("string")
+
+
+# Export final Excel with second sheet containing dtypes
+output_xlsx = file_path.replace(".xls", "_converted.xlsx")
+dtype_df = pd.DataFrame(dtype_map.items(), columns=["Column", "Detected_Type"])
+
+with pd.ExcelWriter(output_xlsx, engine="openpyxl") as writer:
+    df.to_excel(writer, sheet_name="Data", index=False)
+    dtype_df.to_excel(writer, sheet_name="Column_Types", index=False)
+
+print("Done. Output saved:", output_xlsx)
+dtype_map
